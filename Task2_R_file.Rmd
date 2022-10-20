@@ -1,0 +1,107 @@
+---
+title: "Task#2 TSF"
+author: "Pratyusha Mukhopadhyay"
+date: "2022-10-13"
+output: html_document
+---
+
+<style type="text/css">
+
+body, td {
+   font-size: 14px;
+}
+code.r{
+  font-size: 20px;
+}
+pre {
+  font-size: 24px
+}
+</style>
+
+## Attaching required packages
+
+```{r}
+library(dplyr)
+library(ggplot2) # for graphs
+library(ggpubr)   
+library(factoextra) # for clustering
+```
+
+## Reading the dataset
+
+```{r}
+rm(list = ls())
+df = iris ; head(df)
+```
+
+## Finding optimal number of clusters for K Means Classification
+## Graphical undersanding 
+
+```{r}
+fviz_nbclust(df[,-5] , kmeans ,  method = 'wss')
+```
+
+### Observation : From the graph, we see that the 'elbow' is created at 3 on the x axis. The total within cluster sum of squares is substantuially decreasing upto 3. After that, the rate of decrease is very much lower, almost not at all. Hence, the optimal number of clusters will be 3.
+
+## Applying the kmeans to the dataset with optimum value of k 
+
+```{r}
+set.seed(seed = 1)
+
+df_cluster = kmeans(df[,-5] , centers = 3 , nstart = 10) ; df_cluster
+```
+
+## Visually representing the clusters
+
+```{r}
+fviz_cluster(kmeans(df[,-5], 3 , nstart = 10) , 
+             data = df[,-5])
+```
+
+```{r}
+theme_light + theme(plot.title=element_text(size=16,hjust=0.5,face='bold'),
+                  plot.subtitle=element_text(size=13,hjust=0.9),
+                  legend.title=element_text(size=14,face='bold.italic'),
+                  axis.title=element_text(face='bold'),
+                  axis.text=element_text(face='bold',size=12)) %>% 
+  theme_set()
+
+df2 = data.frame(Cluster = as.character(df_cluster$cluster) , df)
+df2 %>% 
+  ggplot(aes(y = Cluster)) +
+  geom_bar(aes(fill = Species)) +
+  ggtitle("Count of Clusters by Species") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+ggplot() +
+  geom_point(data = df2, size = 3,
+             mapping = aes(x = Sepal.Length, 
+                           y = Petal.Length, 
+                          colour = Species))+
+  geom_point(mapping = aes_string(x = df_cluster$centers[, "Sepal.Length"], 
+                                  y = df_cluster$centers[, "Petal.Length"]),
+                                  color = "red", size = 4) +
+  geom_text(mapping = aes_string(x = df_cluster$centers[, "Sepal.Length"], 
+                                  y = df_cluster$centers[, "Petal.Length"],
+                                 label = 1:3),
+                                  color = "black", size = 4)+
+  labs(title = 'Cluster Plot of Sepal Length & Petal Length')
+```
+
+```{r}
+ggplot() +
+  geom_point(data = df2, size = 3,
+             mapping = aes(x = Sepal.Width, 
+                           y = Petal.Width, 
+                           col = Species))+
+  geom_point(mapping = aes_string(x = df_cluster$centers[, "Sepal.Width"], 
+                                  y = df_cluster$centers[, "Petal.Width"]),
+                                  color = "red", size = 4) +
+  geom_text(mapping = aes_string(x = df_cluster$centers[, "Sepal.Width"], 
+                                  y = df_cluster$centers[, "Petal.Width"],
+                                 label = 1:3),
+                                  color = "black", size = 4)+
+  labs(title = 'Cluster Plot of Sepal Width & Petal Width')
+```
